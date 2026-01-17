@@ -1,0 +1,7 @@
+{
+  "name": "AngoExpress",
+  "description": "Plataforma financeira digital angolana para pagamentos seguros, transferências e gestão de ativos.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
