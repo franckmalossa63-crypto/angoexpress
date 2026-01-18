@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Loader2,
   QrCode,
-  ExternalLink
+  ShieldCheck
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,80 +20,73 @@ import { PalancaLogo } from './PalancaLogo';
 import { getExchangeRates } from '../services/gemini';
 
 export const HomeScreen: React.FC = () => {
-  const { user, setCurrentView } = useApp();
+  const { user, setCurrentView, isOnline } = useApp();
   const { t } = useLanguage();
   const [showBalance, setShowBalance] = useState(true);
   const [activeCurrencyIdx, setActiveCurrencyIdx] = useState(0);
   
-  const [rates, setRates] = useState<string>("");
-  const [sources, setSources] = useState<any[]>([]);
+  const [rates, setRates] = useState<string>("A carregar taxas...");
   const [loadingRates, setLoadingRates] = useState(true);
 
   const currentWallet = user.balances[activeCurrencyIdx];
-
-  const formatVal = (val: number, code: string) => {
-    return new Intl.NumberFormat('pt-AO', {
-      style: 'currency',
-      currency: code === 'AOA' ? 'AOA' : code,
-      minimumFractionDigits: 2
-    }).format(val);
-  };
 
   const nextCurrency = () => {
     setActiveCurrencyIdx((prev) => (prev + 1) % user.balances.length);
   };
 
   const fetchRates = async () => {
+    if (!isOnline) {
+      setRates("USD: 932.40 | EUR: 1014.15 (Cache)");
+      setLoadingRates(false);
+      return;
+    }
     setLoadingRates(true);
     const result = await getExchangeRates();
-    setRates(result.text || "USD: 932.40 AOA, EUR: 1014.15 AOA, BRL: 168.45 AOA");
-    setSources(result.sources || []);
+    setRates(result.text);
     setLoadingRates(false);
   };
 
   useEffect(() => {
     fetchRates();
-  }, []);
+  }, [isOnline]);
 
   return (
     <div className="space-y-6 pb-4 animate-in fade-in duration-700">
       {/* Premium Wallet Card */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-black rounded-[2.5rem] p-7 text-white shadow-2xl relative overflow-hidden group border border-slate-700">
-        <div className="absolute top-0 right-0 w-48 h-48 text-red-600 opacity-5 -translate-y-8 translate-x-12 group-hover:rotate-12 transition-transform duration-700">
+      <div className="bg-slate-950 rounded-[2.5rem] p-7 text-white shadow-2xl relative overflow-hidden group border border-white/5">
+        <div className="absolute -top-10 -right-10 w-40 h-40 text-red-600 opacity-10 rotate-12 group-hover:rotate-0 transition-transform duration-1000">
           <PalancaLogo className="w-full h-full" />
         </div>
         
-        <div className="flex justify-between items-start mb-8 relative z-10">
-          <button onClick={nextCurrency} className="flex flex-col items-start active:opacity-70 transition-opacity">
-            <div className="flex items-center gap-2 mb-1.5">
-               <div className="bg-red-600 w-2 h-2 rounded-full shadow-[0_0_8px_rgba(220,38,38,0.8)]"></div>
-               <p className="text-white/50 text-[10px] font-black uppercase tracking-[0.2em]">{t('balance')} {currentWallet.code}</p>
+        <div className="flex justify-between items-start mb-10 relative z-10">
+          <button onClick={nextCurrency} className="flex flex-col items-start active:opacity-70">
+            <div className="flex items-center gap-2 mb-2">
+               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500'}`}></div>
+               <p className="text-white/40 text-[9px] font-black uppercase tracking-[0.3em]">AngoExpress Wallet • {currentWallet.code}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-4xl font-black tracking-tighter">
-                {showBalance ? formatVal(currentWallet.amount, currentWallet.code) : '••••••'}
+            <div className="flex items-center gap-4">
+              <h2 className="text-4xl font-black tracking-tighter italic">
+                {showBalance ? currentWallet.amount.toLocaleString('pt-AO', { minimumFractionDigits: 2 }) : '••••••'}
+                <span className="text-red-600 ml-2 text-2xl not-italic">{currentWallet.symbol}</span>
               </h2>
-              <button onClick={(e) => { e.stopPropagation(); setShowBalance(!showBalance); }} className="opacity-40 hover:opacity-100 transition-opacity">
-                {showBalance ? <EyeOff size={20} /> : <Eye size={20} />}
+              <button onClick={(e) => { e.stopPropagation(); setShowBalance(!showBalance); }} className="text-white/20 hover:text-white transition-colors">
+                {showBalance ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </button>
-          <div className="bg-red-600 p-3 rounded-2xl text-white shadow-xl shadow-red-900/20">
-            <Globe className="w-6 h-6" />
-          </div>
         </div>
         
         <div className="grid grid-cols-2 gap-3 relative z-10">
           <button 
             onClick={() => setCurrentView('withdraw_methods')}
-            className="bg-white/5 border border-white/10 py-4.5 rounded-[1.5rem] flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-colors"
+            className="bg-white/5 border border-white/10 py-4 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 active:scale-95 transition-all"
           >
             <ArrowUpRight size={16} className="text-red-500" />
             {t('send')}
           </button>
           <button 
             onClick={() => setCurrentView('deposit_methods')}
-            className="bg-white text-black py-4.5 rounded-[1.5rem] flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg hover:bg-slate-100 transition-colors"
+            className="bg-red-600 text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-900/20 hover:bg-red-700 active:scale-95 transition-all"
           >
             <Plus size={16} />
             {t('load')}
@@ -101,80 +94,58 @@ export const HomeScreen: React.FC = () => {
         </div>
       </div>
 
-      <section className="bg-white p-7 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-slate-50 p-3 rounded-2xl text-slate-900">
-              <TrendingUp size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Câmbio Oficial AngoExpress</p>
-              {loadingRates ? (
-                <div className="flex items-center gap-2 py-1">
-                  <Loader2 size={12} className="animate-spin text-red-600" />
-                  <span className="text-[11px] font-bold text-slate-400 animate-pulse uppercase">A consultar...</span>
-                </div>
-              ) : (
-                <p className="text-[11px] font-black text-slate-800 tracking-tight py-1">{rates}</p>
-              )}
-            </div>
+      <section className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="bg-slate-50 p-3 rounded-2xl text-red-600">
+            <TrendingUp size={20} />
           </div>
-          <button onClick={fetchRates} className="p-2 text-slate-300 hover:text-red-600 transition-all">
-            <RefreshCw size={18} className={loadingRates ? 'animate-spin' : ''} />
-          </button>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Câmbio Oficial</p>
+            {loadingRates ? (
+              <div className="flex items-center gap-2">
+                <Loader2 size={12} className="animate-spin text-red-600" />
+                <span className="text-[10px] font-bold text-slate-400">A ATUALIZAR...</span>
+              </div>
+            ) : (
+              <p className="text-[11px] font-black text-slate-800 tracking-tight">{rates}</p>
+            )}
+          </div>
         </div>
-
-        {!loadingRates && sources.length > 0 && (
-          <div className="pt-2 border-t border-slate-50 flex flex-wrap gap-2">
-            <span className="text-[8px] font-black text-slate-300 uppercase">Fontes de Dados:</span>
-            {sources.slice(0, 2).map((s, i) => (
-              <a 
-                key={i} 
-                href={s.uri} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-[8px] font-black text-slate-400 flex items-center gap-1 hover:text-red-600 truncate max-w-[120px] transition-colors"
-              >
-                {s.title} <ExternalLink size={8} />
-              </a>
-            ))}
-          </div>
-        )}
+        {!isOnline && <ShieldCheck size={18} className="text-blue-500" title="Dados em Cache" />}
       </section>
+
+      <div className="grid grid-cols-4 gap-4 px-2">
+          {[
+            { icon: Zap, label: 'Pix', color: 'text-teal-600', bg: 'bg-teal-50' },
+            { icon: Globe, label: 'Swift', color: 'text-blue-600', bg: 'bg-blue-50' },
+            { icon: Smartphone, label: 'Unitel', color: 'text-orange-600', bg: 'bg-orange-50' },
+            { icon: RefreshCw, label: 'Trocar', color: 'text-red-600', bg: 'bg-red-50' },
+          ].map((item, i) => (
+            <button key={i} onClick={() => setCurrentView('chat')} className="flex flex-col items-center gap-2 group">
+              <div className={`${item.bg} ${item.color} p-5 rounded-[1.8rem] group-active:scale-90 transition-all border border-transparent hover:border-current/10 shadow-sm`}>
+                <item.icon size={24} strokeWidth={2.5} />
+              </div>
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{item.label}</span>
+            </button>
+          ))}
+      </div>
 
       <button 
         onClick={() => setCurrentView('scan')}
-        className="w-full bg-red-600 text-white py-7 rounded-[2.5rem] flex items-center justify-center gap-5 shadow-2xl hover:bg-red-700 active:scale-95 transition-all group"
+        className="w-full bg-slate-900 text-white py-6 rounded-[2.5rem] flex items-center justify-between px-8 shadow-2xl active:scale-[0.98] transition-all group overflow-hidden relative"
       >
-        <div className="bg-white/10 p-3.5 rounded-2xl">
-          <QrCode size={32} />
+        <div className="absolute inset-0 bg-red-600 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500 opacity-10"></div>
+        <div className="flex items-center gap-5 relative z-10">
+          <div className="bg-red-600 p-3 rounded-2xl shadow-lg shadow-red-900/40">
+            <QrCode size={28} />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-black uppercase tracking-[0.2em] italic">PAGAR COM QR</p>
+            <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Liquidado em 0.5s</p>
+          </div>
         </div>
-        <div className="text-left">
-          <p className="text-[16px] font-black uppercase tracking-[0.25em]">PAGAMENTO QR</p>
-          <p className="text-[10px] font-bold text-red-100 uppercase opacity-70 tracking-widest leading-none">Liquidação Instantânea</p>
-        </div>
+        <Plus size={20} className="text-red-600" />
       </button>
-
-      <section className="pb-4">
-        <h3 className="font-black text-slate-900 uppercase text-[11px] tracking-[0.25em] mb-5 px-3">Serviços Financeiros</h3>
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { icon: Zap, label: 'Pix Brasil', color: 'bg-teal-50 text-teal-600' },
-            { icon: Globe, label: 'Swift', color: 'bg-indigo-50 text-indigo-600' },
-            { icon: Smartphone, label: 'Recargas', color: 'bg-orange-50 text-orange-600' },
-            { icon: Plus, label: 'Outros', color: 'bg-slate-50 text-slate-400' },
-          ].map((action, i) => (
-            <div key={i} className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => setCurrentView('chat')}>
-              <div className={`${action.color} p-5 rounded-[1.8rem] shadow-sm group-hover:-translate-y-1 transition-all border border-transparent hover:border-current/10`}>
-                <action.icon size={26} />
-              </div>
-              <span className="text-[9px] font-black text-slate-600 text-center uppercase tracking-widest">
-                {action.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 };

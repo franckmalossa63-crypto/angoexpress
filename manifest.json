@@ -1,47 +1,56 @@
 
 {
-  "name": "AngoExpress - Finanças Angola",
+  "id": "com.angoexpress.v1",
+  "name": "AngoExpress Finanças",
   "short_name": "AngoExpress",
-  "description": "A plataforma financeira líder em Angola para pagamentos rápidos, câmbio e gestão de ativos.",
+  "description": "Pagamentos Seguros, Câmbio em Tempo Real e Investimentos BODIVA em Angola.",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["standalone", "fullscreen", "minimal-ui"],
-  "background_color": "#000000",
+  "background_color": "#020617",
   "theme_color": "#d60000",
   "orientation": "portrait",
-  "categories": ["finance", "business", "productivity"],
+  "categories": ["finance", "business"],
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/pocket.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/pocket.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     },
     {
       "src": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/pocket.svg",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=1080&h=1920&q=80",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Gestão Financeira AngoExpress"
     }
   ],
   "shortcuts": [
     {
       "name": "Pagar com QR",
+      "short_name": "Pagar",
       "url": "/scan",
       "icons": [{ "src": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/qr-code.svg", "sizes": "192x192" }]
     },
     {
-      "name": "Movimentos",
-      "url": "/history",
-      "icons": [{ "src": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/history.svg", "sizes": "192x192" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "https://picsum.photos/seed/ango-preview1/430/932",
-      "sizes": "430x932",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Ecrã Principal AngoExpress"
+      "name": "Consultar IBAN",
+      "short_name": "IBAN",
+      "url": "/iban_consult",
+      "icons": [{ "src": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/landmark.svg", "sizes": "192x192" }]
     }
   ]
 }

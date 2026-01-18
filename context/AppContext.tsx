@@ -1,14 +1,15 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Transaction, AppView, CurrencyBalance } from '../types';
+import { User, Transaction, AppView } from '../types';
 
 interface AppContextType {
   user: User;
   transactions: Transaction[];
   currentView: AppView;
   setCurrentView: (view: AppView) => void;
-  addTransaction: (tx: Omit<Transaction, 'id' | 'date' | 'status'> & { sourceCurrency?: string; sourceAmount?: number }) => void;
+  addTransaction: (tx: any) => void;
   isLoading: boolean;
+  isOnline: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -16,6 +17,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [isLoading, setIsLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   const [user, setUser] = useState<User>({
     name: "António Manuel",
@@ -23,83 +25,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     balances: [
       { code: 'AOA', symbol: 'Kz', amount: 125400.50, iban: "AO06 0001 0000 1234 5678 9012 3" },
       { code: 'USD', symbol: '$', amount: 450.00, iban: "US99 ANGO 1234 5678 9012 3456" },
-      { code: 'BRL', symbol: 'R$', amount: 1200.00, iban: "BR12 0001 1234 5678 9012 3456" },
-      { code: 'EUR', symbol: '€', amount: 85.00, iban: "BE68 0012 3456 7890 1234" }
+      { code: 'EUR', symbol: '€', amount: 85.00, iban: "BE68 0012 3456 7890 1234" },
+      { code: 'BRL', symbol: 'R$', amount: 1200.00, iban: "BR12 0001 1234 5678 9012 3456" }
     ],
     avatar: "https://picsum.photos/seed/ango/200"
   });
 
   const [transactions, setTransactions] = useState<Transaction[]>([
     {
-      id: 'tx-pix-1',
-      type: 'send',
-      amount: 500,
-      currency: 'BRL',
-      description: 'Envio Internacional PIX (Brasil)',
-      date: new Date().toISOString(),
-      recipient: 'Carlos Silva (Brasil)',
-      status: 'completed',
-      exchangeRate: 168.45
-    },
-    {
-      id: 'tx-visa-1',
+      id: 'tx-1',
       type: 'receive',
-      amount: 100,
-      currency: 'USD',
-      description: 'Recebimento Cartão Visa',
-      date: new Date(Date.now() - 3600000).toISOString(),
-      status: 'completed',
-      exchangeRate: 932.40
+      amount: 15000,
+      currency: 'AOA',
+      description: 'Transferência Multicaixa Express',
+      date: new Date().toISOString(),
+      status: 'completed'
     }
   ]);
 
+  useEffect(() => {
+    const updateOnlineStatus = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
+
   const addTransaction = (tx: any) => {
-    const tempId = Math.random().toString(36).substr(2, 9);
-    
+    setIsLoading(true);
     const newTx: Transaction = {
       ...tx,
-      id: tempId,
+      id: Math.random().toString(36).substr(2, 9),
       date: new Date().toISOString(),
-      status: 'pending',
-      ...(tx.currency !== 'AOA' && !tx.exchangeRate ? { exchangeRate: tx.currency === 'USD' ? 932.40 : 168.45 } : {})
+      status: 'pending'
     };
-    
     setTransactions(prev => [newTx, ...prev]);
-    setIsLoading(true);
-
+    
+    // Simulação de Sincronização
     setTimeout(() => {
       setTransactions(prev => 
-        prev.map(t => t.id === tempId ? { ...t, status: 'completed' } : t)
+        prev.map(t => t.id === newTx.id ? { ...t, status: 'completed' } : t)
       );
-      
-      setUser(prev => {
-        let newBalances = [...prev.balances];
-
-        if (tx.sourceCurrency && tx.sourceAmount) {
-          newBalances = newBalances.map(b => 
-            b.code === tx.sourceCurrency ? { ...b, amount: b.amount - tx.sourceAmount } : b
-          );
-        }
-
-        newBalances = newBalances.map(b => {
-          if (b.code === tx.currency) {
-            const isDeduction = tx.type === 'send' || tx.type === 'payment' || tx.type === 'withdraw';
-            return {
-              ...b,
-              amount: isDeduction ? b.amount - tx.amount : b.amount + tx.amount
-            };
-          }
-          return b;
-        });
-
-        return { ...prev, balances: newBalances };
-      });
       setIsLoading(false);
-    }, 3000);
+    }, 1500);
   };
 
   return (
-    <AppContext.Provider value={{ user, transactions, currentView, setCurrentView, addTransaction, isLoading }}>
+    <AppContext.Provider value={{ user, transactions, currentView, setCurrentView, addTransaction, isLoading, isOnline }}>
       {children}
     </AppContext.Provider>
   );
